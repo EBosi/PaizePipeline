@@ -1,10 +1,12 @@
 import os,re,sys,logging,time,urllib2
 import cutadaptWrapperLib as cutLib
-from IPython import embed
+#from IPython import embed
 from urllib2 import HTTPError,URLError
 
 ### phase 1: download reads, call fastqc and primers filtering
 
+def embed():
+	return
 
 #############################
 # Fxns for Downloading data #
@@ -211,7 +213,7 @@ def profilingPhase1(accession,times):
 	s = """ Pipeline profiling for %s accession:
 		started at %s \t ended at %s
 		time to download reads: %s seconds (%s minutes)
-		time to fastqc and trim: %s (%s minutes)
+		time to trim: %s (%s minutes)
 		time to run Tophat2: %s (%s minutes)
 		""" 	%(accession,date_start,date_end,
 			round(time_to_download,2),round(time_to_download/60.,2),
@@ -273,17 +275,17 @@ def main(urls_file):
 		time_start = time.time()
 		accession_name = i.split('/')[-2]
 		logging.info('Working on %s: url is %s' %(accession_name,i))
-		"""try: reads = downloadReads(i,out_prefix='Accessions')
+		try: reads = downloadReads(i,out_prefix='Accessions')
 		except (HTTPError,URLError) as e: 
 			logging.error('''%s for accession %s when downloading %s
 					Skipping downstream analyses for this accession...''' %(e.__repr__(),accession_name,e.url))
 			failed.append(accession_name)
-			continue"""
+			continue
 		time_download = time.time()
 		# 2.1) go with fastq up to first tophat
 		#### fastqc and trimming
-		logging.info('Performing fastqc and trimming')
-		try: trimmed_reads = phase1(reads,'','',preset=True,outdir_basepath='Accessions')
+		logging.info('Performing trimming')
+		try: trimmed_reads = cutLib.trimmomaticWrapper1(*reads)
 		except Exception as e:
 			logging.error('''%s
 					Skipping downstream analyses for this accession
@@ -303,7 +305,7 @@ def main(urls_file):
 			failed.append(accession_name)
 			continue
 		time_final = time.time()
-		logging.info('Analyses finished for accession %s!')
+		logging.info('Analyses finished for accession %s!' %accession_name)
 		logging.info(profilingPhase1([time_start,time_download,time_trimming,time_final]))
 		# 2.2) copy trimmed reads to SSUP server, then delete everything but junction and stats in tophat dir
 		logging.info('Copying trimmed reads to SSUP server, then deleting everything but junction and stats file...')
@@ -311,7 +313,7 @@ def main(urls_file):
 		moveFiles(trimmed_reads,important_outfiles)
 		cleanFiles()
 		# 2.3) comunicate success for current iteration and move on
-		logging.info('Successful iteration for accession %s!')
+		logging.info('Successful iteration for accession %s!'%accession_name)
 		successful.append(accession_name)
 	# 3) end the pipeline, report number of successful and failed iterations
 	# return #REMOVE THIS WHEN FINISHED TODO

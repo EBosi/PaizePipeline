@@ -30,6 +30,23 @@ def getAdaptersAndPolyAs_old(trash,adaptersDict=None):
 		else: polyAs.append(line.split('\t')[0])
         return adapters,polyAs,universal
 
+def trimmomaticWrapper(inp1,inp2):
+        import os.path as osp
+        from subprocess import PIPE,Popen
+        out1p,out2p = map(lambda x: osp.join(osp.dirname(x),"trimmed_paired_" + osp.basename(x)) ,[inp1,inp2])
+        out1u,out2u = map(lambda x: osp.join(osp.dirname(x),"trimmed_unpaired_" + osp.basename(x)) ,[inp1,inp2])
+        cl = "java -jar trimmomatic.jar \
+        PE -phred33 %s %s %s %s %s %s \
+        ILLUMINACLIP:adapters.fasta:2:30:10 MINLEN:50" %(inp1, inp2, out1p, out1u, out2p, out2u)
+        p = Popen(cl,shell =True); std_out,std_err = p.communicate()
+	if p.returncode != 0:
+		raise RuntimeError("""Trimmomatic failed!!
+					status code %s 
+					stdout %r 
+					stderr %r""" % (
+                       p.returncode, std_out, std_err))
+        return out1p,out2p
+
 
 def getAdaptersAndPolyAs(trash,adaptersDict=None):
         """ return list of sequence for makeCutAdaptCL from fastqc_data file """
@@ -46,8 +63,9 @@ def getAdaptersAndPolyAs(trash,adaptersDict=None):
         return adapters,polyAs,universal
 
 def makeAdaptersPkl(inp="./adapters.fasta"):
-	d = {r.description:str(r.seq) for r in parse(inp,'fasta')}
-	with open('adaptersIlluminaTruSeq.pkl', 'wb') as fp: dump(d,fp)
+	# d = {r.description:str(r.seq) for r in parse(inp,'fasta')}
+	# with open('adaptersIlluminaTruSeq.pkl', 'wb') as fp: dump(d,fp)
+	# return
 	return
 
 def makeCutAdaptCL(inp1,inp2,adapters,universal=None):
