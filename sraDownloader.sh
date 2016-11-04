@@ -9,6 +9,10 @@ asperaExec=$HOME/.aspera/connect/bin/ascp
 asperaKey=$HOME/.aspera/connect/etc/asperaweb_id_dsa.openssh
 sraOutDir=$HOME/ncbi/public/sra
 
+# remove lock, if present
+lockName=$sraOutDir/$accession.sra.lock
+if [[ -e $lockName ]]; then rm -rf $lockName; fi
+
 # download .sra file for $accession
 clPrefetch="prefetch -t ascp -a \"$asperaExec|$asperaKey\" $accession"
 echo "prefetch cl used: $clPrefetch"
